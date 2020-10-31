@@ -17,6 +17,7 @@ class FeedViewController: UIViewController, UITableViewDelegate, UITableViewData
     let commentBar = MessageInputBar()
     var showsCommentBar = false
     var posts = [PFObject]()
+    var selectedPost: PFObject!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -67,11 +68,32 @@ class FeedViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     func messageInputBar(_ inputBar: MessageInputBar, didPressSendButtonWith text: String){
+        
+        
+        let comment = PFObject(className: "Comments")
+        comment["text"] = text
+        comment["post"] = selectedPost
+        comment["author"] = PFUser.current()!
+
+        selectedPost.add(comment, forKey: "comments")
+
+        selectedPost.saveInBackground{ (success, error) in
+            if success{
+                print("Saved")
+            }
+            else{
+                print("Error")
+            }
+        }
+        
+        tableView.reloadData()
+        
         commentBar.inputTextView.text = nil
         showsCommentBar = false
         becomeFirstResponder()
         commentBar.inputTextView.resignFirstResponder()
     }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         let post = posts[section]
         let comments = (post["comments"] as? [PFObject]) ?? []
@@ -81,6 +103,7 @@ class FeedViewController: UIViewController, UITableViewDelegate, UITableViewData
     func numberOfSections(in tableView: UITableView) -> Int {
         return posts.count
     }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let post = posts[indexPath.section]
         let comments = post["comments"] as?[PFObject] ?? []
@@ -147,23 +170,11 @@ class FeedViewController: UIViewController, UITableViewDelegate, UITableViewData
             becomeFirstResponder()
             commentBar.inputTextView.becomeFirstResponder()
             
+            selectedPost = post
         }
-//        comment["text"] = "Random"
-//        comment["post"] = post
-//        comment["author"] = PFUser.current()!
-//
-//        post.add(comment, forKey: "comments")
-//
-//        post.saveInBackground{ (success, error) in
-//            if success{
-//                print("Saved")
-//            }
-//            else{
-//                print("Error")
-//
-//            }
-        }
+
     }
+
     /*
     // MARK: - Navigation
 
@@ -174,4 +185,4 @@ class FeedViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     */
 
-
+}
